@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes 30 Pikachu des 30 ans</title>
+<meta name="theme-color" content="#14182b">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14182b;
+    --panel: #1e2440;
+    --panel-2: #2a3157;
+    --line: #38406b;
+    --paper: #f6f1e3;
+    --muted: #a3a9c9;
+    --yellow: #ffd23f;
+    --red: #e8453c;
+    --radius: 14px;
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--ink); color: var(--paper); }
+  body {
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    background:
+      radial-gradient(900px 400px at 85% -10%, rgba(255,210,63,.13), transparent 60%),
+      var(--ink);
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* En-tête */
+  header { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.02; font-weight: 800; letter-spacing: -.02em; }
+  h1 small { display: block; font-size: .42em; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-bottom: 6px; }
+  .count { text-align: right; font-weight: 800; line-height: 1; }
+  .count b { font-size: clamp(2.6rem, 9vw, 4.4rem); color: var(--yellow); letter-spacing: -.04em; }
+  .count span { font-size: clamp(1.2rem, 4vw, 1.8rem); color: var(--muted); font-weight: 600; }
+  .count p { margin: 6px 0 0; font-size: .85rem; color: var(--muted); font-weight: 400; }
+
+  /* Jauge : 30 segments */
+  .gauge { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; margin: 18px 0 20px; }
+  .gauge i { height: 10px; border-radius: 3px; background: var(--panel-2); transition: background .25s; }
+  .gauge i.on { background: var(--yellow); }
+
+  /* Barre d'outils */
+  .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+  .seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: .9rem; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--yellow); color: var(--ink); }
+  .spacer { flex: 1; }
+  .ghost { border: 1px solid var(--line); background: var(--panel); color: var(--paper); font: inherit; font-size: .85rem; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; }
+  .ghost:hover { border-color: var(--yellow); }
+  .ghost.danger:hover { border-color: var(--red); color: var(--red); }
+
+  /* Grille façon page de classeur */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (min-width: 620px) { .grid { grid-template-columns: repeat(5, 1fr); gap: 14px; } }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(6, 1fr); } }
+
+  .slot { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 7px 7px 9px; transition: border-color .2s, transform .15s; }
+  .slot.owned { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow); }
+  .pocket { all: unset; display: block; width: 100%; cursor: pointer; border-radius: 9px; }
+  .pocket:focus-visible, .zoom:focus-visible, .ghost:focus-visible, .seg button:focus-visible, .modal button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+  .frame { position: relative; aspect-ratio: 63 / 88; border-radius: 8px; overflow: hidden; background: var(--panel-2); }
+  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter .25s, opacity .25s; }
+  .slot:not(.owned) .frame img { filter: grayscale(1) brightness(.55); opacity: .75; }
+  .slot:not(.owned) .pocket:hover .frame img { filter: grayscale(.4) brightness(.8); opacity: .95; }
+  .fallback { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 1.6rem; color: var(--muted); }
+  .badge { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--yellow); color: var(--ink); display: grid; place-items: center; font-weight: 800; font-size: .85rem; transform: scale(0); transition: transform .18s cubic-bezier(.3,1.6,.5,1); }
+  .slot.owned .badge { transform: scale(1); }
+  .zoom { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(20,24,43,.78); color: var(--paper); cursor: pointer; font-size: .9rem; display: grid; place-items: center; }
+  .meta { display: flex; justify-content: space-between; margin-top: 7px; font-size: .78rem; color: var(--muted); font-weight: 600; }
+  .meta b { color: var(--paper); font-weight: 800; }
+  .slot.owned .meta b { color: var(--yellow); }
+
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 40px 10px; }
+  .win { display: none; margin: 0 0 18px; padding: 14px 16px; border-radius: var(--radius); background: var(--yellow); color: var(--ink); font-weight: 800; text-align: center; }
+  .win.show { display: block; }
+
+  footer { margin-top: 28px; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+
+  /* Visionneuse */
+  .modal { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(10,12,24,.88); padding: 16px; }
+  .modal.open { display: flex; }
+  .sheet { width: min(420px, 100%); display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .sheet .big { width: 100%; max-height: 72vh; aspect-ratio: 63 / 88; border-radius: 14px; overflow: hidden; background: var(--panel-2); position: relative; }
+  .sheet .big img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .sheet .row { display: flex; gap: 8px; width: 100%; align-items: center; }
+  .sheet .row .title { flex: 1; text-align: center; font-weight: 800; }
+  .sheet .row .title small { display: block; color: var(--muted); font-weight: 600; font-size: .75rem; }
+  .nav { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--paper); font-size: 1.1rem; cursor: pointer; }
+  .own-btn { width: 100%; border: 0; border-radius: 999px; padding: 13px; font: inherit; font-weight: 800; font-size: 1rem; cursor: pointer; background: var(--yellow); color: var(--ink); }
+  .own-btn.is-owned { background: var(--panel-2); color: var(--paper); border: 1px solid var(--yellow); }
+  .close { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--panel); color: var(--paper); font-size: 1.1rem; cursor: pointer; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); background: var(--paper); color: var(--ink); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: .88rem; opacity: 0; pointer-events: none; transition: .25s; z-index: 20; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><small>Pokémon TCG · 30e Anniversaire · 023/128 → 052/128</small>Mes 30 Pikachu<br>des 30 ans</h1>
+    <div class="count" aria-live="polite">
+      <b id="n">0</b><span> / 30</span>
+      <p id="pct">0 % de la collection</p>
+    </div>
+  </header>
+
+  <div class="gauge" id="gauge" aria-hidden="true"></div>
+  <div class="win" id="win">Collection complète : les 30 Pikachu sont dans le classeur !</div>
+
+  <div class="tools">
+    <div class="seg" role="group" aria-label="Filtrer les cartes">
+      <button data-f="all" aria-pressed="true">Toutes</button>
+      <button data-f="owned" aria-pressed="false">Possédées</button>
+      <button data-f="missing" aria-pressed="false">Manquantes</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="ghost" id="export">Exporter</button>
+    <button class="ghost" id="import">Importer</button>
+    <button class="ghost danger" id="reset">Réinitialiser</button>
+    <input type="file" id="file" accept="application/json" hidden>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    Touchez une carte pour la marquer comme possédée. La loupe ouvre la carte en grand. Ta progression est enregistrée dans ce navigateur : utilise « Exporter » pour en garder une copie ou la retrouver sur un autre appareil.<br>
+    Images : Pokédexia. Pokémon et ses personnages © Nintendo / Game Freak / The Pokémon Company.
+  </footer>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Carte en grand">
+  <button class="close" id="close" aria-label="Fermer">✕</button>
+  <div class="sheet">
+    <div class="big"><img id="bigimg" alt=""></div>
+    <div class="row">
+      <button class="nav" id="prev" aria-label="Carte précédente">‹</button>
+      <div class="title" id="bigtitle"></div>
+      <button class="nav" id="next" aria-label="Carte suivante">›</button>
+    </div>
+    <button class="own-btn" id="ownbtn"></button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function () {
+  // [numéro dans la série /128, identifiant d'image ou null pour le format sans identifiant]
+  var CARDS = [
+    [23,"mt767ea2"],[24,"mu1bz22w"],[25,"mt768t52"],[26,"mt76a1uu"],[27,"mu1c0bph"],
+    [28,"msya92cu"],[29,"mu1cpl2b"],[30,"mt76bapq"],[31,"mu1csdou"],[32,"mt76e3hj"],
+    [33,"mt76fogd"],[34,"mt76hb7i"],[35,"mu1ctk23"],[36,null],[37,null],
+    [38,"mt76meoe"],[39,"mt76pegf"],[40,"mt76rpc0"],[41,"mt76tje3"],[42,"msyarmmt"],
+    [43,"mt76v31r"],[44,"mt76wyho"],[45,"mu1cwg2i"],[46,"mu1cxfkd"],[47,null],
+    [48,"mu1d23k8"],[49,"mt76yv3t"],[50,"msyab5ye"],[51,"mu1d373g"],[52,"mu1d47nv"]
+  ].map(function (c, i) {
+    var num = String(c[0]).padStart(3, "0");
+    return { idx: i + 1, num: num, hash: c[1], id: "30c-" + num };
+  });
+
+  var BASE = "https://cdn.pokedexia.com/cards/me/30C/cards/";
+  function url(card, size) {
+    return BASE + (card.hash ? "30c-" + card.num + "-" + card.hash + "-" + size + ".webp"
+                             : "30C-" + card.num + "-" + size + ".webp");
+  }
+
+  var KEY = "pikachu30-owned-v1";
+  var owned = {};
+  try { owned = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { owned = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(owned)); } catch (e) {} }
+
+  var filter = "all";
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $("grid"), gauge = $("gauge");
+
+  for (var g = 0; g < 30; g++) gauge.appendChild(document.createElement("i"));
+
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  // Image avec repli : taille demandée, puis l'autre taille, puis le numéro
+  function loadImg(img, card, size, holder) {
+    var order = size === "low" ? ["low", "high"] : ["high", "low"];
+    var step = 0;
+    img.onerror = function () {
+      step++;
+      if (step < order.length) { img.src = url(card, order[step]); }
+      else {
+        img.remove();
+        var f = document.createElement("div");
+        f.className = "fallback"; f.textContent = card.num;
+        holder.appendChild(f);
+      }
+    };
+    img.src = url(card, order[0]);
+  }
+
+  function visible(card) {
+    var has = !!owned[card.id];
+    return filter === "all" || (filter === "owned" && has) || (filter === "missing" && !has);
+  }
+
+  function render() {
+    grid.innerHTML = "";
+    var shown = CARDS.filter(visible);
+    if (!shown.length) {
+      var e = document.createElement("p");
+      e.className = "empty";
+      e.textContent = filter === "owned" ? "Aucune carte possédée pour l'instant. Touche une carte pour l'ajouter."
+                                         : "Rien à afficher ici.";
+      grid.appendChild(e);
+    }
+    shown.forEach(function (card) {
+      var has = !!owned[card.id];
+      var slot = document.createElement("div");
+      slot.className = "slot" + (has ? " owned" : "");
+
+      var pocket = document.createElement("button");
+      pocket.className = "pocket";
+      pocket.setAttribute("aria-pressed", has);
+      pocket.setAttribute("aria-label", "Pikachu " + card.num + " sur 128, " + (has ? "possédée" : "manquante"));
+      var frame = document.createElement("div"); frame.className = "frame";
+      var img = document.createElement("img");
+      img.alt = ""; img.loading = "lazy"; img.decoding = "async";
+      frame.appendChild(img);
+      loadImg(img, card, "low", frame);
+      var badge = document.createElement("div"); badge.className = "badge"; badge.textContent = "✓";
+      frame.appendChild(badge);
+      pocket.appendChild(frame);
+      pocket.addEventListener("click", function () { toggle(card); });
+
+      var z = document.createElement("button");
+      z.className = "zoom"; z.textContent = "⌕"; z.setAttribute("aria-label", "Agrandir Pikachu " + card.num);
+      z.addEventListener("click", function (ev) { ev.stopPropagation(); openModal(card.idx - 1); });
+
+      var meta = document.createElement("div"); meta.className = "meta";
+      meta.innerHTML = "<b>" + String(card.idx).padStart(2, "0") + "/30</b><span>" + card.num + "/128</span>";
+
+      slot.appendChild(pocket); slot.appendChild(z); slot.appendChild(meta);
+      grid.appendChild(slot);
+    });
+    updateCount();
+  }
+
+  function updateCount() {
+    var n = CARDS.filter(function (c) { return owned[c.id]; }).length;
+    $("n").textContent = n;
+    $("pct").textContent = Math.round(n / 30 * 100) + " % de la collection";
+    Array.prototype.forEach.call(gauge.children, function (el, i) { el.classList.toggle("on", i < n); });
+    $("win").classList.toggle("show", n === 30);
+  }
+
+  function toggle(card) {
+    if (owned[card.id]) delete owned[card.id]; else owned[card.id] = 1;
+    save();
+    // Si un filtre est actif, on re-rend ; sinon on met à jour sur place
+    if (filter !== "all") { render(); } else { render(); }
+    if (modalIdx !== null) refreshModal();
+  }
+
+  // Filtres
+  document.querySelectorAll(".seg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      filter = b.dataset.f;
+      document.querySelectorAll(".seg button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+      render();
+    });
+  });
+
+  // Export / import / reset
+  $("export").addEventListener("click", function () {
+    var data = { app: "pikachu-30-ans", date: new Date().toISOString(), owned: Object.keys(owned) };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "pikachu-30-ans-sauvegarde.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Sauvegarde exportée");
+  });
+  $("import").addEventListener("click", function () { $("file").click(); });
+  $("file").addEventListener("change", function (ev) {
+    var f = ev.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var d = JSON.parse(r.result), valid = {};
+        (d.owned || []).forEach(function (id) { if (CARDS.some(function (c) { return c.id === id; })) valid[id] = 1; });
+        owned = valid; save(); render();
+        toast(Object.keys(valid).length + " cartes importées");
+      } catch (e) { toast("Fichier illisible : choisis une sauvegarde exportée depuis cette appli"); }
+    };
+    r.readAsText(f); ev.target.value = "";
+  });
+  $("reset").addEventListener("click", function () {
+    if (confirm("Tout décocher ? Cette action efface ta progression sur cet appareil.")) {
+      owned = {}; save(); render(); toast("Collection réinitialisée");
+    }
+  });
+
+  // Visionneuse
+  var modalIdx = null;
+  var modal = $("modal");
+  function openModal(i) { modalIdx = i; modal.classList.add("open"); refreshModal(); $("ownbtn").focus(); }
+  function closeModal() { modalIdx = null; modal.classList.remove("open"); }
+  function refreshModal() {
+    var c = CARDS[modalIdx];
+    var big = $("bigimg");
+    var holder = big.parentNode;
+    var old = holder.querySelector(".fallback"); if (old) old.remove();
+    if (!big.isConnected) { big = document.createElement("img"); big.id = "bigimg"; holder.appendChild(big); }
+    big.alt = "Pikachu " + c.num + " sur 128";
+    loadImg(big, c, "high", holder);
+    $("bigtitle").innerHTML = "Pikachu " + String(c.idx).padStart(2, "0") + "/30<small>" + c.num + "/128</small>";
+    var has = !!owned[c.id];
+    var b = $("ownbtn");
+    b.textContent = has ? "✓ Dans mon classeur (retirer)" : "Ajouter à ma collection";
+    b.classList.toggle("is-owned", has);
+  }
+  $("ownbtn").addEventListener("click", function () { toggle(CARDS[modalIdx]); });
+  $("prev").addEventListener("click", function () { modalIdx = (modalIdx + 29) % 30; refreshModal(); });
+  $("next").addEventListener("click", function () { modalIdx = (modalIdx + 1) % 30; refreshModal(); });
+  $("close").addEventListener("click", closeModal);
+  modal.addEventListener("click", function (ev) { if (ev.target === modal) closeModal(); });
+  document.addEventListener("keydown", function (ev) {
+    if (modalIdx === null) return;
+    if (ev.key === "Escape") closeModal();
+    if (ev.key === "ArrowLeft") $("prev").click();
+    if (ev.key === "ArrowRight") $("next").click();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
